@@ -119,8 +119,8 @@ with st.sidebar:
     )
     skip_val = st.slider(
         "Frame-skip (infer every N frames)",
-        1, 10, 3, key="skip_sl",
-        help="Higher = smoother display + less CPU load. 2–4 is ideal on CPU.",
+        1, 300, 30, key="skip_sl",
+        help="Higher = much lower load. 30 ≈ ~1 inference FPS on 30 FPS input.",
     )
 
     st.markdown("---")
@@ -165,7 +165,7 @@ with ctrl_col:
         st.subheader("💡 CPU Tips")
         st.markdown(
             "- Use **320 px** inference size\n"
-            "- Frame-skip **3–5** recommended\n"
+            "- Frame-skip **30–120** for maximum stability\n"
             "- Export to **OpenVINO** in ⚙️ Settings\n"
             "  for 3–8× speedup on Intel CPUs\n"
             "- Use **RT-DETR-L** for balanced speed/accuracy"

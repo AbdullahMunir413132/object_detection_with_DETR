@@ -90,7 +90,7 @@ class StreamConfig(BaseModel):
     conf:        float = DEFAULT_CONF
     iou:         float = DEFAULT_IOU
     imgsz:       int   = DEFAULT_IMG_SIZE
-    frame_skip:  int   = 2             # run inference every N frames (1 = every frame)
+    frame_skip:  int   = 30            # aggressive default: ~1 inference FPS on 30 FPS input
 
 
 class LiveConfig(BaseModel):
@@ -363,8 +363,10 @@ def _mjpeg_generator():
             + b"\r\n"
         )
 
-        # 30 FPS delivery cap — avoids saturating the network/browser
-        time.sleep(0.033)
+        # Aggressive delivery throttle for stability on low-end systems.
+        # User explicitly requested very sparse playback (as low as ~1 FPS).
+        # When stream is active, push ~1 FPS. When idle, keep blank frame responsive.
+        time.sleep(1.0 if _state.running else 0.2)
 
 
 # ---------------------------------------------------------------------------
