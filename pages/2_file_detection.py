@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import io
 import json
 import csv
-import time
 import tempfile
 import zipfile
 from datetime import datetime
@@ -171,6 +170,17 @@ with tab_vid:
             "Process every N-th frame (1 = every frame, higher = faster preview)",
             1, 30, 5,
         )
+        preview_width = st.select_slider(
+            "Preview width",
+            options=[480, 640, 800, 960],
+            value=640,
+            help="Lower width keeps the UI responsive on long videos.",
+        )
+        ui_refresh_every = st.slider(
+            "UI refresh every N processed frames",
+            1, 20, 5,
+            help="Higher value reduces UI load and prevents browser freeze.",
+        )
 
         if st.button("🚀 Run Video Inference", type="primary", use_container_width=True):
             cap      = cv2.VideoCapture(tmp_path)
@@ -184,6 +194,7 @@ with tab_vid:
             all_records_vid: list[dict] = []
 
             frame_idx = 0
+            processed_idx = 0
             while True:
                 ret, frame = cap.read()
                 if not ret:
@@ -195,17 +206,30 @@ with tab_vid:
                     for r in recs:
                         r["frame"] = frame_idx
                     all_records_vid.extend(recs)
-                    preview.image(
-                        cv2.cvtColor(det.annotated, cv2.COLOR_BGR2RGB),
-                        caption=f"Frame {frame_idx}/{total_fr}",
-                        use_container_width=True,
-                    )
+                    processed_idx += 1
+
+                    # Throttle UI updates to avoid browser white/freezing page
+                    if processed_idx % ui_refresh_every == 0:
+                        ann = det.annotated
+                        h_prev, w_prev = ann.shape[:2]
+                        scale = preview_width / max(w_prev, 1)
+                        resized = cv2.resize(
+                            ann,
+                            (preview_width, max(1, int(h_prev * scale))),
+                            interpolation=cv2.INTER_AREA,
+                        )
+                        preview.image(
+                            cv2.cvtColor(resized, cv2.COLOR_BGR2RGB),
+                            caption=f"Frame {frame_idx}/{total_fr}",
+                            use_container_width=False,
+                        )
                 else:
                     out.write(frame)
 
                 frame_idx += 1
-                progress.progress(min(frame_idx / max(total_fr, 1), 1.0),
-                                   text=f"Frame {frame_idx}/{total_fr}")
+                if frame_idx % 5 == 0 or frame_idx == total_fr:
+                    progress.progress(min(frame_idx / max(total_fr, 1), 1.0),
+                                      text=f"Frame {frame_idx}/{total_fr}")
 
             cap.release()
             out.release()

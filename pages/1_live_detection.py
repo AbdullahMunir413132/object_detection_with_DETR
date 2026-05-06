@@ -168,7 +168,7 @@ with ctrl_col:
             "- Frame-skip **3–5** recommended\n"
             "- Export to **OpenVINO** in ⚙️ Settings\n"
             "  for 3–8× speedup on Intel CPUs\n"
-            "- Use **RT-DETR-S** (small model)"
+            "- Use **RT-DETR-L** for balanced speed/accuracy"
         )
 
 # ── MJPEG feed ────────────────────────────────────────────────────────────

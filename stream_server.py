@@ -34,6 +34,7 @@ import uvicorn
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import (
+    BASE_DIR,
     DEFAULT_CONF, DEFAULT_IOU, DEFAULT_IMG_SIZE,
     AVAILABLE_MODELS, DEFAULT_MODEL_KEY,
     TRAINING_IMAGES_DIR, STREAM_SERVER_PORT,
@@ -119,8 +120,35 @@ def _load_model(model_path: str):
     """
     from ultralytics import RTDETR
 
-    ov_path   = OPENVINO_MODELS.get(model_path, "")
-    onnx_path = ONNX_MODELS.get(model_path, "")
+    def _resolve_candidate_path(p: str) -> str:
+        if os.path.isabs(p):
+            return p
+        local = os.path.join(BASE_DIR, p)
+        if os.path.exists(local):
+            return local
+        return p
+
+    requested = _resolve_candidate_path(model_path)
+    fallback_candidates = [
+        os.path.join(BASE_DIR, "rtdetr-l.pt"),
+        os.path.join(BASE_DIR, "rtdetr-s.pt"),
+        os.path.join(BASE_DIR, "rtdetr-x.pt"),
+        "rtdetr-l.pt",
+        "rtdetr-s.pt",
+        "rtdetr-x.pt",
+    ]
+
+    chosen = requested
+    if isinstance(requested, str) and requested.endswith(".pt") and not os.path.isfile(requested):
+        for cand in fallback_candidates:
+            if os.path.isfile(cand):
+                chosen = cand
+                print(f"[stream_server] Requested model missing ({requested}), using fallback: {cand}")
+                break
+
+    lookup_key = os.path.basename(chosen)
+    ov_path = OPENVINO_MODELS.get(chosen, "") or OPENVINO_MODELS.get(lookup_key, "")
+    onnx_path = ONNX_MODELS.get(chosen, "") or ONNX_MODELS.get(lookup_key, "")
 
     if ov_path and os.path.isdir(ov_path):
         print(f"[stream_server] Loading OpenVINO model: {ov_path}")
@@ -130,8 +158,8 @@ def _load_model(model_path: str):
         print(f"[stream_server] Loading ONNX model: {onnx_path}")
         return RTDETR(onnx_path)
 
-    print(f"[stream_server] Loading PyTorch model: {model_path}")
-    return RTDETR(model_path)
+    print(f"[stream_server] Loading PyTorch model: {chosen}")
+    return RTDETR(chosen)
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +180,23 @@ def _capture_thread(cfg: StreamConfig):
     else:
         src = cfg.file_path
 
-    cap = cv2.VideoCapture(src)
+    cap = None
+    if cfg.source_type == "webcam":
+        # Windows webcam backend fallback chain (helps avoid blank/white feed)
+        for backend in (cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY):
+            cap_try = cv2.VideoCapture(src, backend)
+            if cap_try.isOpened():
+                cap = cap_try
+                break
+            cap_try.release()
+    else:
+        cap = cv2.VideoCapture(src)
+
+    if cap is None:
+        _state.error_msg = f"Cannot open source: {src!r}"
+        _state.running   = False
+        return
+
     if not cap.isOpened():
         _state.error_msg = f"Cannot open source: {src!r}"
         _state.running   = False

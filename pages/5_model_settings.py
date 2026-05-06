@@ -82,14 +82,12 @@ with tab_select:
             st.markdown("""
 | Model | Params | COCO mAP | CPU FPS (approx) |
 |---|---|---|---|
-| RT-DETR-S | 20M | 48.1 | ~8–12 |
 | RT-DETR-L | 32M | 53.0 | ~3–6  |
 | RT-DETR-X | 67M | 54.8 | ~1–3  |
 
 **RT-DETR** (Real-Time Detection Transformer) is a Transformer-based detector
 that eliminates NMS, achieving strong accuracy at real-time speeds.
 
-- **rtdetr-s.pt** — recommended for CPU (best speed/accuracy balance)
 - **rtdetr-l.pt** — better accuracy, slower on CPU
 - **rtdetr-x.pt** — best accuracy, heaviest compute
 - **Custom .pt**  — your fine-tuned weights after training on captured data

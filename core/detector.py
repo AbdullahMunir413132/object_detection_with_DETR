@@ -11,7 +11,7 @@ from ultralytics import RTDETR
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import DEFAULT_CONF, DEFAULT_IOU, MAX_DETECTIONS, DEFAULT_IMG_SIZE
+from config import BASE_DIR, DEFAULT_CONF, DEFAULT_IOU, MAX_DETECTIONS, DEFAULT_IMG_SIZE
 
 
 # ---------------------------------------------------------------------------
@@ -22,7 +22,27 @@ from config import DEFAULT_CONF, DEFAULT_IOU, MAX_DETECTIONS, DEFAULT_IMG_SIZE
 def load_model(model_path: str) -> RTDETR:
     """Load (and cache) an RT-DETR model from *model_path*."""
     try:
-        model = RTDETR(model_path)
+        requested = model_path
+        if not os.path.isabs(requested):
+            local_requested = os.path.join(BASE_DIR, requested)
+            if os.path.exists(local_requested):
+                requested = local_requested
+
+        chosen = requested
+        if isinstance(requested, str) and requested.endswith(".pt") and not os.path.isfile(requested):
+            for cand in (
+                os.path.join(BASE_DIR, "rtdetr-l.pt"),
+                os.path.join(BASE_DIR, "rtdetr-s.pt"),
+                os.path.join(BASE_DIR, "rtdetr-x.pt"),
+                "rtdetr-l.pt",
+                "rtdetr-s.pt",
+                "rtdetr-x.pt",
+            ):
+                if os.path.isfile(cand):
+                    chosen = cand
+                    break
+
+        model = RTDETR(chosen)
         return model
     except Exception as exc:
         st.error(f"❌ Failed to load model `{model_path}`: {exc}")

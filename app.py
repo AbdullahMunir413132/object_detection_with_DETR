@@ -1,10 +1,44 @@
 # =============================================================================
 # app.py — RT-DETR Sentinel Pro  |  Entry point
 # =============================================================================
-# Run with:  streamlit run app.py
+# Run with:  py -m streamlit run app.py
+
+import os
+import sys
+import subprocess
+import time
+import urllib.request
 
 import streamlit as st
-from config import APP_TITLE, APP_ICON, GLOBAL_CSS
+from config import APP_TITLE, APP_ICON, GLOBAL_CSS, STREAM_SERVER_PORT
+
+# ---------------------------------------------------------------------------
+# Auto-start stream server if it's not already running
+# ---------------------------------------------------------------------------
+def _stream_server_alive() -> bool:
+    try:
+        urllib.request.urlopen(
+            f"http://localhost:{STREAM_SERVER_PORT}/health", timeout=1
+        )
+        return True
+    except Exception:
+        return False
+
+if "stream_server_pid" not in st.session_state:
+    st.session_state.stream_server_pid = None
+
+if not _stream_server_alive():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    proc = subprocess.Popen(
+        [sys.executable, os.path.join(BASE_DIR, "stream_server.py")],
+        cwd=BASE_DIR,
+    )
+    st.session_state.stream_server_pid = proc.pid
+    # Give it a moment to bind the port
+    for _ in range(20):
+        time.sleep(0.5)
+        if _stream_server_alive():
+            break
 
 st.set_page_config(
     page_title=APP_TITLE,

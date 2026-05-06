@@ -27,25 +27,30 @@ STREAM_SERVER_URL  = f"http://localhost:{STREAM_SERVER_PORT}"
 # Available Models
 # ---------------------------------------------------------------------------
 AVAILABLE_MODELS = {
-    "RT-DETR Small  (rtdetr-s.pt)  ← CPU recommended": "rtdetr-s.pt",
-    "RT-DETR Large  (rtdetr-l.pt)":                     "rtdetr-l.pt",
-    "RT-DETR Extra-Large (rtdetr-x.pt)":                "rtdetr-x.pt",
+    "RT-DETR Large  (rtdetr-l.pt)":       os.path.join(BASE_DIR, "rtdetr-l.pt"),
+    "RT-DETR Extra-Large (rtdetr-x.pt)":  os.path.join(BASE_DIR, "rtdetr-x.pt"),
 }
 
 # OpenVINO-exported model directories (populated after export in Model Settings)
 OPENVINO_MODELS = {
+    os.path.join(BASE_DIR, "rtdetr-s.pt"): os.path.join(BASE_DIR, "rtdetr-s_openvino_model"),
+    os.path.join(BASE_DIR, "rtdetr-l.pt"): os.path.join(BASE_DIR, "rtdetr-l_openvino_model"),
+    os.path.join(BASE_DIR, "rtdetr-x.pt"): os.path.join(BASE_DIR, "rtdetr-x_openvino_model"),
     "rtdetr-s.pt": os.path.join(BASE_DIR, "rtdetr-s_openvino_model"),
     "rtdetr-l.pt": os.path.join(BASE_DIR, "rtdetr-l_openvino_model"),
     "rtdetr-x.pt": os.path.join(BASE_DIR, "rtdetr-x_openvino_model"),
 }
 
 ONNX_MODELS = {
+    os.path.join(BASE_DIR, "rtdetr-s.pt"): os.path.join(BASE_DIR, "rtdetr-s.onnx"),
+    os.path.join(BASE_DIR, "rtdetr-l.pt"): os.path.join(BASE_DIR, "rtdetr-l.onnx"),
+    os.path.join(BASE_DIR, "rtdetr-x.pt"): os.path.join(BASE_DIR, "rtdetr-x.onnx"),
     "rtdetr-s.pt": os.path.join(BASE_DIR, "rtdetr-s.onnx"),
     "rtdetr-l.pt": os.path.join(BASE_DIR, "rtdetr-l.onnx"),
     "rtdetr-x.pt": os.path.join(BASE_DIR, "rtdetr-x.onnx"),
 }
 
-DEFAULT_MODEL_KEY = "RT-DETR Small  (rtdetr-s.pt)  ← CPU recommended"
+DEFAULT_MODEL_KEY = "RT-DETR Large  (rtdetr-l.pt)"
 
 # ---------------------------------------------------------------------------
 # Inference Defaults
